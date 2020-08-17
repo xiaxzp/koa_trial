@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Generator</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Monaco;
+      background: #f6f8fa;
+      --background: #f6f8fa;
+      transition: background 0.2s, color 0.2s;
+    }
+    [v-cloak] {
+      visibility: hidden;
+    }
+    button {
+      padding: 6px 12px;
+    }
+    .generated button {
+      margin-top: 12px;
+    }
+    .generated > div{
+      margin-top: 12px;
+    }
+    .callback {
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app">
+    <div class="prefix">
+      <input v-model="prefix">
+    </div>
+    <div class="generated">
+      <div>
+        {{prefix}}<!--
+        --><span v-for="item in result" :key="item.key"><!--
+          -->{{item.text}};<!--
+        --></span><!--
+      --></div>
+      <button @click="handleGenerate">re-generate</button>
+    </div>
+    <div class="callback">
+      <button @click="sendCallback(true)">useful</button>
+      <button @click="sendCallback(false)">useless</button>
+    </div>
+  </div>
+  <script src="https://s1.pstatp.com/cdn/expire-1-M/vue/2.6.10/vue.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          prefix: '一鸣同学',
+          result: [],
+        };
+      },
+      computed: {
+      },
+      async created() {
+        this.handleGenerate();
+      },
+      methods: {
+        async handleGenerate() {
+          try {
+            const data = await fetch('/api/generate', {
+              method: 'GET',
+              headers: {
+                Accept: 'application/json',
+              },
+            });
+            const json = await data.json();
+            console.log(json);
+            this.result = json.data;
+          } catch(e) {
+            console.error(e);
+          }
+        },
+        async sendCallback(useful) {
+          try {
+            const formData = new FormData();
+            formData.append('useful', useful? 1:0);
+            formData.append('id', 123);
+            const data = await fetch('/api/fallback', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              body: JSON.stringify({
+                useful: useful? 1:0,
+                data: this.result,
+              }),
+            });
+            const json = await data.json();
+            console.log(json);
+          } catch(e) {
+            console.error(e);
+          }
+        },
+      },
+    });
+  </script>
+</body>
+</html>
