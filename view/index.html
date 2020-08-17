@@ -36,13 +36,13 @@
       <input v-model="prefix">
     </div>
     <div class="generated">
+      <button @click="handleGenerate">re-generate</button>
       <div>
         {{prefix}}<!--
         --><span v-for="item in result" :key="item.key"><!--
           -->{{item.text}};<!--
         --></span><!--
       --></div>
-      <button @click="handleGenerate">re-generate</button>
     </div>
     <div class="callback">
       <button @click="sendCallback(true)">useful</button>
