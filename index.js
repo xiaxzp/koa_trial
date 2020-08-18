@@ -32,7 +32,6 @@ function writeFiles(jsonObj, fileid) {
 app.use(async (ctx, next) => {
   await next();
   const rt = ctx.response.get('X-Response-Time');
-  console.log(`${ctx.method} ${ctx.url} - ${rt}`, ctx.request.body);
 });
 // response
 
@@ -47,7 +46,6 @@ const main = (ctx, next) => {
 };
 const generate = async (ctx, next) => {
   const res = [];
-  console.log(configFile, typeof configFile);
   Object.keys(configFile).forEach(key => {
     const obj = configFile[key];
     const wobj = weightFile[key];
@@ -71,7 +69,6 @@ const generate = async (ctx, next) => {
   ctx.response.body = {code: 0, data: res};
 };
 const fallback = async function(ctx, next) {
-  console.log(ctx.request.body, typeof ctx.request.body);
   const {useful, data} = ctx.request.body;
   data.forEach(item => {
     if (useful) {
@@ -87,10 +84,67 @@ const fallback = async function(ctx, next) {
   }
   ctx.response.body = {code: 0};
 };
+
+
+
+const configRevertPath = path.join(__dirname, 'src/configRevert.json');
+const configRevertFileId = fs.openSync(configRevertPath, 'r+');
+const configRevertFile = JSON.parse(fs.readFileSync(configRevertFileId, {encoding: 'utf8'}));
+const weightRevertPath = path.join(__dirname, 'src/weightRevert.json');
+const weightRevertFileId = fs.openSync(weightRevertPath, 'r+');
+const weightRevertFile = JSON.parse(fs.readFileSync(weightRevertFileId, {encoding: 'utf8'}));
+
+let timeRevert = new Date().getTime();
+
+const generateRevert = async (ctx, next) => {
+  const res = {};
+  const keys = Object.keys(configRevertFile);
+  const mainS = Math.floor(Math.random() * keys.length);
+  const key = keys[mainS];
+
+  const obj = configRevertFile[key];
+  const wobj = weightRevertFile[key];
+  const arr = Object.values(wobj);
+  const sum = arr.reduce((a,b) => {
+    return a + b;
+  }, 0);
+  const rd = Math.floor(Math.random() * sum);
+  let sumin = arr[0];
+  let i = 0;
+  while(rd > sumin) {
+    sumin += arr[i];
+    i += 1;
+  }
+  Object.assign(res, {
+    key,
+    id: i,
+    text: obj[i],
+  })
+  ctx.response.body = {code: 0, data: res};
+};
+const fallbackRevert = async function(ctx, next) {
+  const {useful, data} = ctx.request.body;
+  if (useful) {
+    weightRevertFile[data.key][data.id] = Math.min(weightRevertFile[data.key][data.id] + 2, 200);
+  } else {
+    weightRevertFile[data.key][data.id] = Math.max(weightRevertFile[data.key][data.id] - 2, 10);
+  }
+  const newtime = new Date().getTime();
+  if (newtime - timeRevert > 5 * 60 * 1000) {
+    timeRevert = newtime;
+    writeFiles(weightRevertFile, weightRevertPath);
+  }
+  ctx.response.body = {code: 0};
+};
+
+
+
 router.get('/', main);
 router.get('/about', about);
 router.get('/api/generate', generate);
 router.post('/api/fallback', fallback);
+router.get('/api/generate-revert', generateRevert);
+router.post('/api/fallback-revert', fallbackRevert);
 
 app.use(bodyParser())
 app

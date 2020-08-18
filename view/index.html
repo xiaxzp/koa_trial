@@ -12,6 +12,7 @@
       background: #f6f8fa;
       --background: #f6f8fa;
       transition: background 0.2s, color 0.2s;
+      padding-left: 24px;
     }
     [v-cloak] {
       visibility: hidden;
@@ -19,34 +20,60 @@
     button {
       padding: 6px 12px;
     }
-    .generated button {
-      margin-top: 12px;
-    }
     .generated > div{
       margin-top: 12px;
     }
     .callback {
       margin-top: 12px;
     }
+    .nagetive {
+      padding-top: 36px;
+    }
   </style>
 </head>
 <body>
   <div id="app" class="app">
     <div class="prefix">
+      <h2 class="title">
+        前缀
+      </h2>
       <input v-model="prefix">
     </div>
-    <div class="generated">
-      <button @click="handleGenerate">re-generate</button>
-      <div>
-        {{prefix}}<!--
-        --><span v-for="item in result" :key="item.key"><!--
-          -->{{item.text}};<!--
-        --></span><!--
-      --></div>
+    <div class="positive">
+      <h2 class="title">
+        Positive
+      </h2>
+      <div class="generated">
+        <button @click="handleGenerate">re-generate</button>
+        <div>
+          {{prefix}}<!--
+          --><span v-for="item in result" :key="item.key"><!--
+            -->{{item.text}};<!--
+          --></span><!--
+        --></div>
+      </div>
+      <div class="callback">
+        <button @click="sendCallback(true)">useful</button>
+        <button @click="sendCallback(false)">useless</button>
+      </div>
     </div>
-    <div class="callback">
-      <button @click="sendCallback(true)">useful</button>
-      <button @click="sendCallback(false)">useless</button>
+    <div class="nagetive">
+      <h2 class="title">
+        Nagetive
+      </h2>
+      <div class="generated">
+        <button @click="handleGenerateRevert">re-generate</button>
+        <div>
+          {{prefix}}<!--
+          --><span><!--
+            -->{{resultRevert.text}};<!--
+          --></span><!--
+        --></div>
+      </div>
+      <div class="callback">
+        <button @click="sendCallbackRevert(true)">useful</button>
+        <button @click="sendCallbackRevert(false)">useless</button>
+      </div>
     </div>
   </div>
   <script src="https://s1.pstatp.com/cdn/expire-1-M/vue/2.6.10/vue.js"></script>
@@ -57,12 +84,16 @@
         return {
           prefix: '一鸣同学',
           result: [],
+          resultRevert: {},
+          sended: false,
+          sendedRevert: false,
         };
       },
       computed: {
       },
       async created() {
         this.handleGenerate();
+        this.handleGenerateRevert();
       },
       methods: {
         async handleGenerate() {
@@ -74,6 +105,7 @@
               },
             });
             const json = await data.json();
+            this.sended = false;
             console.log(json);
             this.result = json.data;
           } catch(e) {
@@ -82,9 +114,7 @@
         },
         async sendCallback(useful) {
           try {
-            const formData = new FormData();
-            formData.append('useful', useful? 1:0);
-            formData.append('id', 123);
+            this.sended = true;
             const data = await fetch('/api/fallback', {
               method: 'POST',
               headers: {
@@ -94,6 +124,45 @@
               body: JSON.stringify({
                 useful: useful? 1:0,
                 data: this.result,
+              }),
+            });
+            const json = await data.json();
+            console.log(json);
+          } catch(e) {
+            console.error(e);
+          }
+        },
+
+
+
+        async handleGenerateRevert() {
+          try {
+            const data = await fetch('/api/generate-revert', {
+              method: 'GET',
+              headers: {
+                Accept: 'application/json',
+              },
+            });
+            const json = await data.json();
+            this.sended = false;
+            console.log(json);
+            this.resultRevert = json.data;
+          } catch(e) {
+            console.error(e);
+          }
+        },
+        async sendCallbackRevert(useful) {
+          try {
+            this.sended = true;
+            const data = await fetch('/api/fallback-revert', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              body: JSON.stringify({
+                useful: useful? 1:0,
+                data: this.resultRevert,
               }),
             });
             const json = await data.json();
