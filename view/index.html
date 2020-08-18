@@ -53,8 +53,8 @@
         --></div>
       </div>
       <div class="callback">
-        <button @click="sendCallback(true)">useful</button>
-        <button @click="sendCallback(false)">useless</button>
+        <button :disabled="sended" @click="sendCallback(true)">useful</button>
+        <button :disabled="sended" @click="sendCallback(false)">useless</button>
       </div>
     </div>
     <div class="nagetive">
@@ -71,8 +71,8 @@
         --></div>
       </div>
       <div class="callback">
-        <button @click="sendCallbackRevert(true)">useful</button>
-        <button @click="sendCallbackRevert(false)">useless</button>
+        <button :disabled="sendedRevert" @click="sendCallbackRevert(true)">useful</button>
+        <button :disabled="sendedRevert" @click="sendCallbackRevert(false)">useless</button>
       </div>
     </div>
   </div>
@@ -144,7 +144,7 @@
               },
             });
             const json = await data.json();
-            this.sended = false;
+            this.sendedRevert = false;
             console.log(json);
             this.resultRevert = json.data;
           } catch(e) {
@@ -153,7 +153,7 @@
         },
         async sendCallbackRevert(useful) {
           try {
-            this.sended = true;
+            this.sendedRevert = true;
             const data = await fetch('/api/fallback-revert', {
               method: 'POST',
               headers: {
