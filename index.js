@@ -75,16 +75,16 @@ const fallback = async function(ctx, next) {
   const {useful, data} = ctx.request.body;
   data.forEach(item => {
     if (useful) {
-      weightFile[item.key][item.id] += 2;
+      weightFile[item.key][item.id] = Math.min(weightFile[item.key][item.id] + 2, 200);
     } else {
       weightFile[item.key][item.id] = Math.max(weightFile[item.key][item.id] - 2, 10);
     }
   })
   const newtime = new Date().getTime();
-  // if (newtime - time > 5 * 60 * 1000) {
+  if (newtime - time > 5 * 60 * 1000) {
     time = newtime;
     writeFiles(weightFile, weightPath);
-  // }
+  }
   ctx.response.body = {code: 0};
 };
 router.get('/', main);
